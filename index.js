@@ -2,12 +2,16 @@ require('dotenv').config()
 const express = require('express')
 const bodyParser = require('body-parser')
 const axios = require('axios');
-const {dbClient,conectarBaseDeDatos} = require('./db/dbConnection')
+const {dbClient,conectarBaseDeDatos} = require('./db/dbConnection');
+const webhookRoutes = require('./routes/webhook')
 
 const API_URL = process.env.API_URL || 'https://api.wassenger.com/v1'
 
 const app = express();
-app.use(bodyParser.json())
+app.use(bodyParser.json());
+
+//Rutas
+app.post('/webhook', webhookRoutes)
 
 // Function to register a Ngrok tunnel webhook for the chatbot
 // Only used in local development mode
