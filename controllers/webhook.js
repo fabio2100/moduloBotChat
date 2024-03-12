@@ -1,6 +1,7 @@
 const pg = require('pg');
 const axios = require('axios')
-const patientController = require('../controllers/patients')
+const patientController = require('../controllers/patients');
+const {canReply} = require('../helpers/canReply');
 
 const status = {};
 
@@ -11,7 +12,9 @@ function webhookPost(req,res){
 }
 
 function procesarMensaje({data,device}){
-    console.log(data.body)
+    if(process.env.FILTER_MESSAGES == 1 && !canReply({data,device})){
+        return console.log('[info] Skip message due to chat already assigned or not eligible to reply:', data.fromNumber, data.date, data.body)
+    }
     function escribirMensajeAEnviar(status){
         if(status.hasOwnProperty(data.chat.id)){
             if(Date.now() - status[data.chat.id].date > 60000){
