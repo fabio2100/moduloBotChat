@@ -2,7 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const bodyParser = require('body-parser')
 const axios = require('axios');
-const {dbClient,conectarBaseDeDatos} = require('./db/dbConnection');
+const {dbClient,conectarBaseDeDatos,conectarBaseDeDatosMySql} = require('./db/dbConnection');
 const webhookRoutes = require('./routes/webhook')
 
 const API_URL = process.env.API_URL || 'https://api.wassenger.com/v1'
@@ -124,7 +124,8 @@ function exit (msg, ...args) {
 // Initialize chatbot server
 async function main () {
     // API key must be provided
-    conectarBaseDeDatos()
+    conectarBaseDeDatos();
+    conectarBaseDeDatosMySql();
     if (!process.env.API_KEY || process.env.API_KEY.length < 60) {
       return exit('Please sign up in Wassenger and obtain your API key here:\nhttps://app.wassenger.com/apikeys')
     }

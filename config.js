@@ -11,6 +11,10 @@ module.exports = {
   // Optional. Set a list of labels that will tell the chatbot to skip it
   skipChatWithLabels: ['no-bot'],
 
+  //Put almost one number to use the bot if you're working in development mode. 
+  //Only the numbers entered here can use the bot to make tries, other numbers are ignored. 
+  numbersDevelopmentEnv: ['542616071225','5492616071225'],
+
   // Optional. Ignore processing messages sent by one of the following numbers
   // Important: the phone number must be in E164 format with no spaces or symbols
   numbersBlacklist: ['19548121853'],

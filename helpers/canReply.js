@@ -1,6 +1,20 @@
+const config = require('../config')
+
 function canReply ({ data, device }) {
     const { chat } = data
   
+    //Skip if enviroment isn't development and the number isn't used to make tries
+    if(process.env.NODE_ENV !='production'){
+      if(!config.numbersDevelopmentEnv.length){
+        console.log(`[warn] There isn't any number in config.numbersDevelopmentEnv seted and you're in development mode. The bot won't write any messages unless you setted the numbers the bot has to answer`)
+        return false;
+      }
+      if(!config.numbersDevelopmentEnv.some(number=> number == data.fromNumber || number ==  data.fromNumber.slice(1))){
+          console.log('[info] The number is not in the list of allowed numbers')
+          return false
+        }
+    }
+
     // Skip if chat is already assigned to an team member
     if (chat.owner && chat.owner.agent) {
       return false

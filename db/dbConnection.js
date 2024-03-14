@@ -1,6 +1,7 @@
 const { Client } = require('pg');
+const mysql = require('mysql')
 
-
+//Conexion a Postgresql
 const dbConfig = {
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '',
@@ -11,7 +12,7 @@ const dbConfig = {
 
 const dbClient = new Client(dbConfig);
 
-// Conecta al cliente a la base de datos
+// Conecta al cliente a la base de datos Dicom o configurada en env
 async function conectarBaseDeDatos() {
     try {
         await dbClient.connect();
@@ -21,7 +22,24 @@ async function conectarBaseDeDatos() {
     }
 }
 
+const connection = mysql.createConnection({
+    host: process.env.DB_MYSQL_HOST || 'localhost',
+    user: process.env.DB_MYSQL_USER || 'root',
+    password : process.env.DB_MYSQL_PASSWORD || '',
+    database : process.env.DB_MYSQL_NAME || 'his'
+})
+
+async function conectarBaseDeDatosMySql(){
+    try {
+        connection.connect();
+        console.log('[info] Conexión a base de datos MySql realizada correctamente')
+    } catch (error) {
+        console.log('[error] Ha ocurrido un error al conectar a base de datos MySql', error)
+    }
+}
+
 module.exports = {
     dbClient,
-    conectarBaseDeDatos
+    conectarBaseDeDatos,
+    conectarBaseDeDatosMySql
 }
