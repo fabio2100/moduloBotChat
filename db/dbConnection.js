@@ -22,7 +22,7 @@ async function conectarBaseDeDatos() {
     }
 }
 
-const connection = mysql.createConnection({
+const mysqlClient = mysql.createConnection({
     host: process.env.DB_MYSQL_HOST || 'localhost',
     user: process.env.DB_MYSQL_USER || 'root',
     password : process.env.DB_MYSQL_PASSWORD || '',
@@ -31,7 +31,7 @@ const connection = mysql.createConnection({
 
 async function conectarBaseDeDatosMySql(){
     try {
-        connection.connect();
+        mysqlClient.connect();
         console.log('[info] Conexión a base de datos MySql realizada correctamente')
     } catch (error) {
         console.log('[error] Ha ocurrido un error al conectar a base de datos MySql', error)
@@ -41,5 +41,6 @@ async function conectarBaseDeDatosMySql(){
 module.exports = {
     dbClient,
     conectarBaseDeDatos,
-    conectarBaseDeDatosMySql
+    conectarBaseDeDatosMySql,
+    mysqlClient
 }
