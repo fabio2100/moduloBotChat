@@ -1,14 +1,19 @@
 
-const {dbClient} = require('../db/dbConnection')
+const patientModel = require('../models/patientsModel')
+
 
 async function getPatientData(patientId){
-    const query = `SELECT * FROM tb_pacientes WHERE patientid='${patientId}';`;
-    dbClient.query(query,(err,res)=>{
-        if(err){
-            console.log({err})
-        }
-        return res
-    })
+    const users = await patientModel.getPatientData(patientId);
+    console.log(users[0])
+    if(users.length==1){
+        return users[0]
+    }
+    if(users.length==0){
+        return false;
+    }
+    if(users.length>1){
+        return `error`;
+    }
 }
 
 

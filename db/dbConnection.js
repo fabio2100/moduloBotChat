@@ -26,7 +26,7 @@ const mysqlClient = mysql.createConnection({
     host: process.env.DB_MYSQL_HOST || 'localhost',
     user: process.env.DB_MYSQL_USER || 'root',
     password : process.env.DB_MYSQL_PASSWORD || '',
-    database : process.env.DB_MYSQL_NAME || 'his'
+    database : process.env.DB_MYSQL_NAME || 'hisa'
 })
 
 async function conectarBaseDeDatosMySql(){
