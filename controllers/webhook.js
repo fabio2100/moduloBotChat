@@ -5,6 +5,8 @@ const {canReply} = require('../helpers/canReply');
 const {mysqlClient} = require('../db/dbConnection')
 
 const status = {};
+const options = { weekday: 'short', month: 'numeric', day: 'numeric',hour:'2-digit',minute: '2-digit' };
+                        
 
 function webhookPost(req,res){
     const now = new Date();
@@ -28,6 +30,7 @@ async function procesarMensaje({data,device}){
             status[data.chat.id] = {date:Date.now(),step:`menuPrincipal`};
             return menuPrincipal();
         }
+        console.log('paso=>',status[data.chat.id].step)
         switch(status[data.chat.id].step){
             case `menuPrincipal`:
                 const patient =  await patientController.getPatientData(textoIngresado);
@@ -42,6 +45,7 @@ async function procesarMensaje({data,device}){
                     status[data.chat.id] = {date:Date.now(),step:`menuPrincipal`};
                     escribirMensaje(`Paciente no encontrado`)
                 }
+                break;
             case `menuTurnos`:
                 console.log('MENU TURNOS')
                 switch(data.body.toLowerCase()){
@@ -51,10 +55,56 @@ async function procesarMensaje({data,device}){
                         break;
                     case '2':
                     case 'nuevo turno':
-                        escribirMensaje(`nuevo turno elegido`);
-                        break;
+                        var date = new Date();
+                        const primerOpcion = new Date(date);
+                        primerOpcion.setHours(date.getHours() + 1);
+                        primerOpcion.setMinutes('00')
+                        const dateDespues = new Date(date);
+                        dateDespues.setHours(date.getHours() + 4)
+                        dateDespues.setMinutes('00')
+                        const dateMna = new Date(date);
+                        dateMna.setDate(date.getDate()+1);
+                        dateMna.setMinutes('00')
+                        const datePasadoMna = new Date(date);
+                        datePasadoMna.setDate(date.getDate()+2);
+                        datePasadoMna.setMinutes('00')
+                        escribirMensaje('*PRÓXIMOS TURNOS DISPONIBLES*',[
+                            {"text":`${primerOpcion.toLocaleDateString('es-AR',options)}`,"id":"1"},
+                            {"text":`${dateDespues.toLocaleDateString('es-AR',options)}`,"id":"2"},
+                            {"text":`${dateMna.toLocaleDateString('es-AR',options)}`,"id":"3"},
+                            {"text":`${datePasadoMna.toLocaleDateString('es-AR',options)}`,"id":"4"},
+                        ])
+                        status[data.chat.id] = {date:Date.now(),step:`seleccionTurno`,turnos:[primerOpcion,dateDespues,dateMna,datePasadoMna]};
+                        break;    
                     default: 
-                        escribirMensaje(`No entiendo lo que querés decir, intenta colocar el número de la opción o la opción con palabras tal cual se menciona en el mensaje`)
+                        escribirMensaje(`No entiendo lo que querés decir, intenta colocar el número de la opción o la opción con palabras tal cual se menciona en el mensaje`);
+                        console.log('ingresa a default');
+                        break;
+                    }
+                break;
+            case 'seleccionTurno':
+                const userSelection = data.body.toLowerCase() - 1
+                console.log('SELECCION TURNOS');
+                console.log(status[data.chat.id].turnos)
+                console.log(status[data.chat.id].turnos[userSelection])
+                escribirMensaje(`¿Quieres confirmar el turno el *${status[data.chat.id].turnos[userSelection].toLocaleDateString('es-AR',options)}*`,[
+                    {"text":"*SÍ*"},
+                    {"text":"*NO*"},
+                ]);
+                status[data.chat.id] = {date:Date.now(),step:`confirmaTurno`}
+                break;
+            case 'confirmaTurno':
+                switch (data.body.toLowerCase() - 1){
+                    case 0:
+                        
+                        break;
+                    case 1:
+                        status[data.chat.id] = {date:Date.now(),step:`menuTurnos`};
+                        escribirMensaje(`¿Qué acción deseas realizar?`,[
+                            {"text":`*Mis turnos*`},
+                            {"text":`*Nuevo turno*`}
+                        ])
+                        break; 
                 }
         }
         
