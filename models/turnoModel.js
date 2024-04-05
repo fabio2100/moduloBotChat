@@ -8,7 +8,7 @@ async function saveTurno(patientId,fechaYHora){
     return new Promise((resolve,reject)=>{
         mysqlClient.query(query,values,(err,res)=>{
             if(err){
-                console.log(`Ha ocurrido un error`,{err});
+                console.log(`[error]Ha ocurrido un error`,{err});
                 reject(err)
             }
             resolve(res)
@@ -16,7 +16,24 @@ async function saveTurno(patientId,fechaYHora){
     }) 
 }
 
+function getTurnosByPatientId(patientId){
+    const query = `SELECT * FROM turnos WHERE patientid=? ORDER BY fechahora`;
+    const values = [patientId];
+
+    return new Promise((resolve,reject)=>{
+        mysqlClient.query(query,values,(err,res)=>{
+            if(err){
+                console.log(`[error]Ha ocurrido un error`,{err});
+                reject(err) 
+            }
+            resolve(res)
+        })
+    })
+
+}
+
 
 module.exports = {
-    saveTurno
+    saveTurno,
+    getTurnosByPatientId
 }

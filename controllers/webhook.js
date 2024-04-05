@@ -21,7 +21,7 @@ async function procesarMensaje({data,device}){
         return console.log('[info] Skip message due to chat already assigned or not eligible to reply:', data.fromNumber, data.date, data.body)
     }
   
-    console.log('-----------------------se llama al webhook')
+    console.log('-----------------------')
     console.log(Date.now())
     
     if(status.hasOwnProperty(data.chat.id) && (status[data.chat.id].date + 100000 > Date.now())){
@@ -47,12 +47,29 @@ async function procesarMensaje({data,device}){
                 }
                 break;
             case `menuTurnos`:
-                console.log('MENU TURNOS')
-                console.log(status)
                 switch(data.body.toLowerCase()){
                     case '1':
                     case 'mis turnos':
-                        escribirMensaje(`ver turnos elegidos`);
+                        const turnos = await turnosController.getTurnosByPatientId(status[data.chat.id].patient.patientid);
+                        if(turnos){
+                            let message=`*LISTADO DE SUS TURNOS* \n \n`;
+                            turnos.forEach(turno => {
+                                message += `- ${turno.fechahora.setHours(turno.fechahora.getHours() - 3).toLocaleDateString('es-AR',options)} *${turno.estado}* \n`
+                            });
+                            escribirMensaje(message)
+                            status[data.chat.id] = {date:Date.now(),step:`menuTurnos`,patient:patient};
+                            escribirMensaje(`¿Qué acción deseas realizar?`,[
+                                {"text":`*Mis turnos*`},
+                                {"text":`*Nuevo turno*`}
+                            ])
+                        }else{
+                            escribirMensaje(`Usted no posee turnos`);
+                            status[data.chat.id] = {patient:status[data.chat.id].patient,date:Date.now(),step:`menuTurnos`};
+                            escribirMensaje(`¿Qué acción deseas realizar?`,[
+                                {"text":`*Mis turnos*`},
+                                {"text":`*Nuevo turno*`}
+                            ]) 
+                        }
                         break;
                     case '2':
                     case 'nuevo turno':

@@ -11,6 +11,15 @@ async function saveTurno(patientId,fechaYHora){
     }
 }
 
+async function getTurnosByPatientId(patientId){
+    const turnos =  await turnosModel.getTurnosByPatientId(patientId);
+    if(turnos.length == 0){
+        return false
+    }
+    return turnos;
+}
+
 module.exports = {
-    saveTurno
+    saveTurno,
+    getTurnosByPatientId
 }
