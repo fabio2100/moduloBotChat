@@ -25,24 +25,22 @@ async function procesarMensaje({data,device}){
     console.log(Date.now())
     
     if(status.hasOwnProperty(data.chat.id) && (status[data.chat.id].date + 100000 > Date.now())){
+        const currentUser = data.chat.id;
         const textoIngresado = data.body;
         if(textoIngresado=='cancelar'){
-            status[data.chat.id] = {date:Date.now(),step:`menuPrincipal`,patient:null};
+            status[currentUser] = {date:Date.now(),step:`menuPrincipal`,patient:null};
             return menuPrincipal();
         }
-        console.log('paso=>',status[data.chat.id].step)
-        switch(status[data.chat.id].step){
+        console.log('paso=>',status[currentUser].step)
+        switch(status[currentUser].step){
             case `menuPrincipal`:
                 const patient =  await patientController.getPatientData(textoIngresado);
                 if(patient){
-                    status[data.chat.id] = {date:Date.now(),step:`menuTurnos`,patient:patient};
+                    status[currentUser] = {date:Date.now(),step:`menuTurnos`,patient:patient};
                     escribirMensaje(`Hola ${patient.patientsname}`);
-                    escribirMensaje(`¿Qué acción deseas realizar?`,[
-                        {"text":`*Mis turnos*`},
-                        {"text":`*Nuevo turno*`}
-                    ])
+                    menuTurnos()
                 }else{
-                    status[data.chat.id] = {date:Date.now(),step:`menuPrincipal`,patient:null};
+                    status[currentUser] = {date:Date.now(),step:`menuPrincipal`,patient:null};
                     escribirMensaje(`Paciente no encontrado`)
                 }
                 break;
@@ -50,25 +48,20 @@ async function procesarMensaje({data,device}){
                 switch(data.body.toLowerCase()){
                     case '1':
                     case 'mis turnos':
-                        const turnos = await turnosController.getTurnosByPatientId(status[data.chat.id].patient.patientid);
+                        const turnos = await turnosController.getTurnosByPatientId(status[currentUser].patient.patientid);
                         if(turnos){
                             let message=`*LISTADO DE SUS TURNOS* \n \n`;
                             turnos.forEach(turno => {
-                                message += `- ${turno.fechahora.setHours(turno.fechahora.getHours() - 3).toLocaleDateString('es-AR',options)} *${turno.estado}* \n`
+                                turno.fechahora.setHours(turno.fechahora.getHours() - 3);
+                                message += `- ${turno.fechahora.toLocaleDateString('es-AR',options)} *${turno.estado}* \n`
                             });
                             escribirMensaje(message)
-                            status[data.chat.id] = {date:Date.now(),step:`menuTurnos`,patient:patient};
-                            escribirMensaje(`¿Qué acción deseas realizar?`,[
-                                {"text":`*Mis turnos*`},
-                                {"text":`*Nuevo turno*`}
-                            ])
+                            status[currentUser] = {date:Date.now(),step:`menuTurnos`,patient:status[currentUser].patient};
+                            menuTurnos()
                         }else{
                             escribirMensaje(`Usted no posee turnos`);
-                            status[data.chat.id] = {patient:status[data.chat.id].patient,date:Date.now(),step:`menuTurnos`};
-                            escribirMensaje(`¿Qué acción deseas realizar?`,[
-                                {"text":`*Mis turnos*`},
-                                {"text":`*Nuevo turno*`}
-                            ]) 
+                            status[currentUser] = {patient:status[currentUser].patient,date:Date.now(),step:`menuTurnos`};
+                            menuTurnos() 
                         }
                         break;
                     case '2':
@@ -96,7 +89,7 @@ async function procesarMensaje({data,device}){
                             {"text":`${dateMna.toLocaleDateString('es-AR',options)}`},
                             {"text":`${datePasadoMna.toLocaleDateString('es-AR',options)}`},
                         ])
-                        status[data.chat.id] = {patient:status[data.chat.id].patient,date:Date.now(),step:`seleccionTurno`,turnos:[primerOpcion,dateDespues,dateMna,datePasadoMna]};
+                        status[currentUser] = {patient:status[currentUser].patient,date:Date.now(),step:`seleccionTurno`,turnos:[primerOpcion,dateDespues,dateMna,datePasadoMna]};
                         break;    
                     default: 
                         escribirMensaje(`No entiendo lo que querés decir, intenta colocar el número de la opción o la opción con palabras tal cual se menciona en el mensaje`);
@@ -105,35 +98,29 @@ async function procesarMensaje({data,device}){
                 break;
             case 'seleccionTurno':
                 const userSelection = data.body.toLowerCase() - 1
-                escribirMensaje(`¿Quieres confirmar el turno el *${status[data.chat.id].turnos[userSelection].toLocaleDateString('es-AR',options)}*`,[
+                escribirMensaje(`¿Quieres confirmar el turno el *${status[currentUser].turnos[userSelection].toLocaleDateString('es-AR',options)}*`,[
                     {"text":"*SÍ*"},
                     {"text":"*NO*"},
                 ]);
-                status[data.chat.id] = {patient:status[data.chat.id].patient,date:Date.now(),step:`confirmaTurno`,turno:status[data.chat.id].turnos[userSelection].toISOString().slice(0,19).replace('T',' ')}
+                status[currentUser] = {patient:status[currentUser].patient,date:Date.now(),step:`confirmaTurno`,turno:status[currentUser].turnos[userSelection].toISOString().slice(0,19).replace('T',' ')}
                 break;
             case 'confirmaTurno':
                 switch (data.body.toLowerCase() - 1){
                     case 0:
-                        const patientId = status[data.chat.id].patient.patientid;
-                        const fechaYHora = status[data.chat.id].turno;
+                        const patientId = status[currentUser].patient.patientid;
+                        const fechaYHora = status[currentUser].turno;
                         const res = await turnosController.saveTurno(patientId,fechaYHora);
                         if(res){
                             escribirMensaje(`Turno guardado correctamente`);
                         }else{
                             escribirMensaje('Ocurrió un error al tratar de guardar el turno, vuelva a intentarlo');
                         }
-                        status[data.chat.id] = {patient:status[data.chat.id].patient,date:Date.now(),step:`menuTurnos`};
-                        escribirMensaje(`¿Qué acción deseas realizar?`,[
-                            {"text":`*Mis turnos*`},
-                            {"text":`*Nuevo turno*`}
-                        ])
+                        status[currentUser] = {patient:status[currentUser].patient,date:Date.now(),step:`menuTurnos`};
+                        menuTurnos()
                         break;
                     case 1:
-                        status[data.chat.id] = {patient:status[data.chat.id].patient,date:Date.now(),step:`menuTurnos`};
-                        escribirMensaje(`¿Qué acción deseas realizar?`,[
-                            {"text":`*Mis turnos*`},
-                            {"text":`*Nuevo turno*`}
-                        ])
+                        status[currentUser] = {patient:status[currentUser].patient,date:Date.now(),step:`menuTurnos`};
+                        menuTurnos()
                         break; 
                 }
         }
@@ -148,6 +135,13 @@ async function procesarMensaje({data,device}){
             escribirMensaje(`No se entiende el mensaje. Volviendo al menú principal`)
         }
         escribirMensaje(`Bienvenido al menú de turnos. Por favor, ingrese su id de paciente para continuar`)
+    }
+
+    function menuTurnos(){
+        escribirMensaje(`¿Qué acción deseas realizar?`,[
+            {"text":`*Mis turnos*`},
+            {"text":`*Nuevo turno*`}
+        ])
     }
     
     function escribirMensaje(mensaje=null,botones=[]){
