@@ -90,7 +90,26 @@ async function procesarMensaje({data,device}){
                             {"text":`${datePasadoMna.toLocaleDateString('es-AR',options)}`},
                         ])
                         status[currentUser] = {patient:status[currentUser].patient,date:Date.now(),step:`seleccionTurno`,turnos:[primerOpcion,dateDespues,dateMna,datePasadoMna]};
-                        break;    
+                        break;  
+                    case '3':
+                    case 'eliminar turno':
+                        const turnosEliminar = await turnosController.getTurnosByPatientId(status[currentUser].patient.patientid);
+                        console.log(turnosEliminar)
+                        if(turnosEliminar){
+                            let message=`*INGRESE EL NÚMERO DEL TURNO A ELIMINAR* \n \n`;
+                            let arrayTurnos = [];
+                            turnosEliminar.forEach(turno => {
+                                turno.fechahora.setHours(turno.fechahora.getHours() - 3);
+                                arrayTurnos.push({"text":turno.fechahora.toLocaleDateString('es-AR',options),turnoId:turno.turnoid});
+                            })
+                            escribirMensaje(message,arrayTurnos)
+                            status[currentUser] = {date:Date.now(),step:`seleccionTurnoAEliminar`,patient:status[currentUser].patient,arrayTurnos};
+                        }else{
+                            escribirMensaje(`Usted no posee turnos`);
+                            status[currentUser] = {patient:status[currentUser].patient,date:Date.now(),step:`menuTurnos`};
+                            menuTurnos() 
+                        }
+                    break;
                     default: 
                         escribirMensaje(`No entiendo lo que querés decir, intenta colocar el número de la opción o la opción con palabras tal cual se menciona en el mensaje`);
                         break;
@@ -104,6 +123,14 @@ async function procesarMensaje({data,device}){
                 ]);
                 status[currentUser] = {patient:status[currentUser].patient,date:Date.now(),step:`confirmaTurno`,turno:status[currentUser].turnos[userSelection].toISOString().slice(0,19).replace('T',' ')}
                 break;
+            case 'seleccionTurnoAEliminar':
+                console.log(status[currentUser])
+                const turnoAEliminar = data.body.toLowerCase() - 1
+                escribirMensaje(`¿Estás seguro que quieres eliminar el turno el *${status[currentUser].turnos[turnoAEliminar].toLocaleDateString('es-AR',options)}*`,[
+                    {"text":"*SÍ*"},
+                    {"text":"*NO*"},
+                ]);
+            break;
             case 'confirmaTurno':
                 switch (data.body.toLowerCase() - 1){
                     case 0:
@@ -138,9 +165,10 @@ async function procesarMensaje({data,device}){
     }
 
     function menuTurnos(){
-        escribirMensaje(`¿Qué acción deseas realizar?`,[
-            {"text":`*Mis turnos*`},
-            {"text":`*Nuevo turno*`}
+        escribirMensaje(`*¿Qué acción deseas realizar?*`,[
+            {"text":`Mis turnos`},
+            {"text":`Nuevo turno`},
+            {"text":`Eliminar turno`}
         ])
     }
     
