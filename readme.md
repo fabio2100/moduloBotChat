@@ -9,3 +9,7 @@
 * *NODE_ENV* Es el tipo de entorno sobre el que se trabajará. En caso de un ambiente de producción, cambiar a produccion
 * *WEBHOOK_URL* Es la *url* que recibirá los llamados de los eventos de wassenger. Colocar la *url* a usar, en caso de un entorno local, configurarla usando algún puente, como por ejempo *ngrok*
 * *NGROK_TOKEN* Token de ngrok, si se setea un valor en el anterior no hace falta colocar nada. 
+
+*** USO ***
+
+En entornos de desarrollos, se deben configurar los números 'blanqueados' a los cuales el bot les responderá. Dicha configuración se hace un el archivo *config.js*, agregando los números a **numbersDevelopmentEnv**. Si no se coloca ningún número, el bot no funcionará directamente. Los números deben colocarse en formato todo número, incluyendo código país. Ej *542615123456*

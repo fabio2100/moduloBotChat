@@ -13,7 +13,7 @@ module.exports = {
 
   //Put almost one number to use the bot if you're working in development mode. 
   //Only the numbers entered here can use the bot to make tries, other numbers are ignored. 
-  numbersDevelopmentEnv: ['542616071225','5492616071225'],
+  numbersDevelopmentEnv: [],
 
   // Optional. Ignore processing messages sent by one of the following numbers
   // Important: the phone number must be in E164 format with no spaces or symbols
